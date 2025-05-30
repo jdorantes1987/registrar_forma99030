@@ -23,33 +23,29 @@ class GestionOrdenPago:
                 print(f"Procesando fila {index}: {row['Planilla']}")
                 new_id_orden = self.oOrden.get_next_num_orden(last_id_orden)
                 print(f"Nuevo ID de orden: {new_id_orden}")
-                item = [
-                    dict(
-                        cta_ie="2-4-01-02-0002",
-                        monto_d=0.0,
-                        monto_h=abs(row["Débito Fiscal"]),
-                    ),
-                    dict(
-                        cta_ie="1-4-04-01-0001",
-                        monto_d=abs(row["Crédito Fiscal"]),
-                        monto_h=0.0,
-                    ),
-                    dict(
-                        cta_ie="1-4-04-01-0002",
-                        monto_d=abs(row["Exced_cf_m_Ante"]),
-                        monto_h=0.0,
-                    ),
-                    dict(
-                        cta_ie="1-4-04-01-0002",
-                        monto_d=0.0,
-                        monto_h=abs(row["Exced_cf_m_Sig"]),
-                    ),
-                    dict(
-                        cta_ie="1-4-04-02-0001",
-                        monto_d=abs(row["Ret_Desc"]),
-                        monto_h=0.0,
-                    ),
+                item = []
+                cuentas = [
+                    ("Débito Fiscal", "2-4-01-02-0002", 0.0, "monto_h"),
+                    ("Crédito Fiscal", "1-4-04-01-0001", "monto_d", 0.0),
+                    ("Exced_cf_m_Ante", "1-4-04-01-0002", "monto_d", 0.0),
+                    ("Exced_cf_m_Sig", "1-4-04-01-0002", 0.0, "monto_h"),
+                    ("Ret_Desc", "1-4-04-02-0001", "monto_d", 0.0),
                 ]
+
+                for campo, cta_ie, monto_d, monto_h in cuentas:
+                    valor = abs(row.get(campo, 0))
+                    if valor > 0:
+                        item_dict = {"cta_ie": cta_ie, "monto_d": 0.0, "monto_h": 0.0}
+                        if monto_d == "monto_d":
+                            item_dict["monto_d"] = valor
+                        else:
+                            item_dict["monto_d"] = monto_d
+                        if monto_h == "monto_h":
+                            item_dict["monto_h"] = valor
+                        else:
+                            item_dict["monto_h"] = monto_h
+                        item.append(item_dict)
+
                 print(f"Items a registrar: {item}")
                 # Registrar la orden de pago
                 self.oOrden.registrar_orden_pago(
