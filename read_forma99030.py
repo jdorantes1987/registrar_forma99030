@@ -48,7 +48,7 @@ class Forma99030:
             "Ret_Acum",
             "Ret_Desc",
             "Ret_Periodo",
-        ]
+        ]  # Lista de columnas que contienen montos
 
         # Eliminar separadores de miles y reemplazar coma decimal por punto
         for col in cols_montos:
