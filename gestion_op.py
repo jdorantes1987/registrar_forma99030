@@ -1,7 +1,11 @@
 import sys
+
 from read_forma99030 import Forma99030
 
 sys.path.append("..\\profit")  # Ajusta la ruta según tu estructura de carpetas
+from data.mod.banco import orden_pago
+from conn.database_connector import DatabaseConnector
+from conn.sql_server_connector import SQLServerConnector
 from data.mod.banco import orden_pago
 
 
@@ -15,7 +19,7 @@ class GestionOrdenPago:
         self,
     ):
         data = self.oForma99030.planillas_por_registrar()
-        last_id_orden = self.oOrden.get_last_id_orden("20250531")
+        last_id_orden = self.oOrden.get_last_id_orden("20250630")
 
         try:
             # Recorre el diccionario de datos
@@ -75,20 +79,20 @@ class GestionOrdenPago:
 if __name__ == "__main__":
     import os
 
-    sys.path.append("..\\profit")
-    from conn.conexion import DatabaseConnector
-    from data.mod.banco import orden_pago
     from dotenv import load_dotenv
 
-    load_dotenv()
+    load_dotenv(override=True)
+
     # Para SQL Server
-    datos_conexion = dict(
+    sqlserver_connector = SQLServerConnector(
         host=os.environ["HOST_PRODUCCION_PROFIT"],
-        base_de_datos=os.environ["DB_NAME_DERECHA_PROFIT"],
+        database=os.environ["DB_NAME_DERECHA_PROFIT"],
+        user=os.environ["DB_USER_PROFIT"],
+        password=os.environ["DB_PASSWORD_PROFIT"],
     )
-    oConexion = DatabaseConnector(db_type="sqlserver", **datos_conexion)
+    db = DatabaseConnector(sqlserver_connector)
     oGestionOrdenPago = GestionOrdenPago(
-        oConexion,
+        db,
         name_file="Historico declaraciones forma 99030 BANTEL",
         name_sheet="data",
     )
