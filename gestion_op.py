@@ -1,5 +1,5 @@
 import sys
-
+from pandas import to_datetime
 from read_forma99030 import Forma99030
 
 sys.path.append("..\\profit")  # Ajusta la ruta según tu estructura de carpetas
@@ -17,9 +17,18 @@ class GestionOrdenPago:
 
     def procesar_orden_pago(
         self,
+        fecha_ultima_orden,
     ):
         data = self.oForma99030.planillas_por_registrar()
-        last_id_orden = self.oOrden.get_last_id_orden("20250630")
+        last_id_orden = self.oOrden.get_last_id_orden(fecha_ultima_orden)
+        if not data:
+            print("No hay planillas por registrar.")
+            return
+
+        # Convertir la fecha de contabilización a formato YYYYMMDD para el encabezado de la orden de pago
+        data[0]["Fecha_Contabilizar"] = to_datetime(
+            data[0]["Fecha_Contabilizar"], format="%d/%m/%Y", errors="coerce"
+        ).strftime("%Y%m%d")
 
         try:
             # Recorre el diccionario de datos
@@ -55,7 +64,7 @@ class GestionOrdenPago:
                 self.oOrden.registrar_orden_pago(
                     num_orden=new_id_orden,
                     cod_ben="G200003030",
-                    fecha_emision="20250531",
+                    fecha_emision=row["Fecha_Contabilizar"],
                     descripcion="COMPENSACIÓN IVA"
                     + " - "
                     + row["Periodo"]
@@ -96,4 +105,4 @@ if __name__ == "__main__":
         name_file="Historico declaraciones forma 99030 BANTEL",
         name_sheet="data",
     )
-    oGestionOrdenPago.procesar_orden_pago()
+    oGestionOrdenPago.procesar_orden_pago(fecha_ultima_orden="20250831")
