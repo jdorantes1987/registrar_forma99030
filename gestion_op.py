@@ -25,15 +25,15 @@ class GestionOrdenPago:
             print("No hay planillas por registrar.")
             return
 
-        # Convertir la fecha de contabilización a formato YYYYMMDD para el encabezado de la orden de pago
-        data[0]["Fecha_Contabilizar"] = to_datetime(
-            data[0]["Fecha_Contabilizar"], format="%d/%m/%Y", errors="coerce"
-        ).strftime("%Y%m%d")
-
         try:
             # Recorre el diccionario de datos
             for index, row in enumerate(data):
                 print(f"Procesando fila {index}: {row['Planilla']}")
+                # Convertir la fecha de contabilización a formato YYYYMMDD para el encabezado de la orden de pago
+                row["Fecha_Contabilizar"] = to_datetime(
+                    row["Fecha_Contabilizar"], format="%d/%m/%Y", errors="coerce"
+                ).strftime("%Y%m%d")
+
                 new_id_orden = self.oOrden.get_next_num_orden(last_id_orden)
                 print(f"Nuevo ID de orden: {new_id_orden}")
                 item = []
@@ -99,10 +99,11 @@ if __name__ == "__main__":
         user=os.environ["DB_USER_PROFIT"],
         password=os.environ["DB_PASSWORD_PROFIT"],
     )
+    sqlserver_connector.connect()
     db = DatabaseConnector(sqlserver_connector)
     oGestionOrdenPago = GestionOrdenPago(
         db,
         name_file="Historico declaraciones forma 99030 BANTEL",
         name_sheet="data",
     )
-    oGestionOrdenPago.procesar_orden_pago(fecha_ultima_orden="20250831")
+    oGestionOrdenPago.procesar_orden_pago(fecha_ultima_orden="20250930")
