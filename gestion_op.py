@@ -1,11 +1,10 @@
 import sys
+
 from pandas import to_datetime
+
 from read_forma99030 import Forma99030
 
 sys.path.append("..\\profit")  # Ajusta la ruta según tu estructura de carpetas
-from data.mod.banco import orden_pago
-from conn.database_connector import DatabaseConnector
-from conn.sql_server_connector import SQLServerConnector
 from data.mod.banco import orden_pago
 
 
@@ -87,10 +86,20 @@ class GestionOrdenPago:
 
 if __name__ == "__main__":
     import os
+    import sys
 
     from dotenv import load_dotenv
 
-    load_dotenv(override=True)
+    sys.path.append("..\\conexiones")
+
+    from conn.database_connector import DatabaseConnector
+    from conn.sql_server_connector import SQLServerConnector
+
+    env_path = os.path.join("..\\conexiones", ".env")
+    load_dotenv(
+        dotenv_path=env_path,
+        override=True,
+    )  # Recarga las variables de entorno desde el archivo
 
     # Para SQL Server
     sqlserver_connector = SQLServerConnector(
@@ -106,4 +115,4 @@ if __name__ == "__main__":
         name_file="Historico declaraciones forma 99030 BANTEL",
         name_sheet="data",
     )
-    oGestionOrdenPago.procesar_orden_pago(fecha_ultima_orden="20250930")
+    oGestionOrdenPago.procesar_orden_pago(fecha_ultima_orden="20251031")
