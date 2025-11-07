@@ -23,8 +23,9 @@ class GestionOrdenPago:
             print("No hay planillas por registrar.")
             return
 
+        orden_procesada = True
+        det_procesado = True  # Indicador de éxito para los detalles
         last_id_orden = self.oOrden.get_last_id_orden(fecha_ultima_orden)
-
         for index, row in enumerate(data):
             new_id_orden = self.oOrden.get_next_num_orden(last_id_orden)
             print(f"Nuevo ID de orden: {new_id_orden}")
@@ -56,22 +57,24 @@ class GestionOrdenPago:
             safe1 = self.oOrden.normalize_payload_orden(payload_orden)
             id_orden = self.oOrden.create_orden(safe1)
             print(f"id_orden: {id_orden}")
+            if not id_orden:
+                orden_procesada = False
+                continue  # Saltar al siguiente registro si no se pudo crear la orden
 
             item = []
             # Inicializar contador de renglones antes de procesar detalles
             renglon_num = 0
             # Definición de las cuentas y montos
             cuentas = [
-                ("Débito Fiscal", "2-4-01-02-0002", 0.0, "monto_h"),
-                ("Crédito Fiscal", "1-4-04-01-0001", "monto_d", 0.0),
-                ("Exced_cf_m_Ante", "1-4-04-01-0002", "monto_d", 0.0),
-                ("Exced_cf_m_Sig", "1-4-04-01-0002", 0.0, "monto_h"),
-                ("Ret_Desc", "1-4-04-02-0001", "monto_d", 0.0),
+                ("Débito Fiscal", "2-4-01-02-0002", "monto_d", 0.0),
+                ("Crédito Fiscal", "1-4-04-01-0001", 0.0, "monto_h"),
+                ("Exced_cf_m_Ante", "1-4-04-01-0002", 0.0, "monto_h"),
+                ("Exced_cf_m_Sig", "1-4-04-01-0002", "monto_d", 0.0),
+                ("Ret_Desc", "1-4-04-02-0001", 0.0, "monto_h"),
             ]
 
-            det_procesado = True  # Indicador de éxito para los detalles
             # Procesar cada cuenta
-            for idx, (campo, cta_ie, monto_d, monto_h) in enumerate(cuentas, start=0):
+            for idx, (campo, cta_ie, debe, haber) in enumerate(cuentas, start=0):
                 valor = abs(row.get(campo, 0))
                 if valor > 0:
                     renglon_num += 1
@@ -91,14 +94,14 @@ class GestionOrdenPago:
                         "co_us_mo": "JACK",
                         "co_sucu_mo": "01",
                     }
-                    if monto_d == "monto_d":
+                    if debe == "monto_d":
                         item_dict["monto_d"] = valor
                     else:
-                        item_dict["monto_d"] = monto_d
-                    if monto_h == "monto_h":
+                        item_dict["monto_d"] = debe
+                    if haber == "monto_h":
                         item_dict["monto_h"] = valor
                     else:
-                        item_dict["monto_h"] = monto_h
+                        item_dict["monto_h"] = haber
                     item.append(item_dict)
 
                     safe2 = self.oOrden.normalize_payload_det_orden(item_dict)
@@ -108,12 +111,12 @@ class GestionOrdenPago:
                         det_procesado = False
                     print(f"detalle_id: {detalle_id}")
 
-            if id_orden and det_procesado:
-                self.db.commit()
-            else:
-                self.db.rollback()
+        if orden_procesada and det_procesado:
+            self.db.commit()
+        else:
+            self.db.rollback()
 
-            self.db.autocommit(True)
+        self.db.autocommit(True)
 
 
 if __name__ == "__main__":
